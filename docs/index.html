@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#7c3aed" />
+  <title>school_book</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>school_book</h1>
+        <p>교회학교 중고등부 교적 + 출석(출/결) + 통계를 iPhone에서 오프라인으로 관리합니다.</p>
+        <div class="row" id="tabs">
+          <button class="tab active" data-tab="students">학생</button>
+          <button class="tab" data-tab="attendance">출석</button>
+          <button class="tab" data-tab="stats">통계</button>
+          <button class="tab" data-tab="backup">백업</button>
+        </div>
+        <div class="meta" id="status">대기 중</div>
+      </div>
+      <div class="badge">Safari PWA · 로컬 저장</div>
+    </div>
+
+    <div class="card view" id="view-students">
+      <div class="row">
+        <button class="btn primary" id="btn-student-add">+ 학생 등록</button>
+      </div>
+
+      <div class="grid" style="margin-top:10px">
+        <label>이름 검색
+          <input id="f-q" placeholder="이름" />
+        </label>
+        <label>학년
+          <select id="f-grade"></select>
+        </label>
+        <label>반/그룹
+          <select id="f-group"></select>
+        </label>
+      </div>
+      <div class="row">
+        <button class="btn green" id="btn-filter">필터</button>
+        <button class="btn" id="btn-filter-reset">초기화</button>
+      </div>
+
+      <table class="table">
+        <thead><tr><th>ID</th><th>이름</th><th>학년</th><th>반/그룹</th><th>연락처</th><th></th></tr></thead>
+        <tbody id="students-tbody"></tbody>
+      </table>
+      <div class="meta">팁: 학생을 삭제하지 않고 <span class="kbd">비활성</span>으로 전환합니다.</div>
+    </div>
+
+    <div class="card view" id="view-attendance" style="display:none">
+      <div class="grid">
+        <label>날짜(주일)
+          <input id="att-date" placeholder="YYYY-MM-DD" />
+        </label>
+      </div>
+      <div class="row">
+        <button class="btn green" id="btn-att-open">열기</button>
+        <button class="btn" id="btn-att-today">오늘</button>
+        <button class="btn primary" id="btn-att-save">저장</button>
+      </div>
+
+      <table class="table">
+        <thead><tr><th>이름</th><th>학년</th><th>반/그룹</th><th>출결</th></tr></thead>
+        <tbody id="att-tbody"></tbody>
+      </table>
+      <div class="meta">출결만 관리합니다(출석/결석).</div>
+    </div>
+
+    <div class="card view" id="view-stats" style="display:none">
+      <div class="row" style="align-items:center">
+        <label>최근
+          <select id="lookback">
+            <option value="4">4회</option>
+            <option value="8">8회</option>
+            <option value="12" selected>12회</option>
+            <option value="24">24회</option>
+          </select>
+        </label>
+        <button class="btn green" id="btn-stats-refresh">새로고침</button>
+      </div>
+
+      <h3 style="margin:12px 0 8px">날짜별 출석률(%)</h3>
+      <canvas id="chart-sessions" width="980" height="320"></canvas>
+      <div class="row"><button class="btn" id="btn-export-sessions">PNG 저장</button></div>
+
+      <hr />
+      <h3 style="margin:12px 0 8px">반/그룹별 출석률(%)</h3>
+      <canvas id="chart-groups" width="980" height="360"></canvas>
+      <div class="row"><button class="btn" id="btn-export-groups">PNG 저장</button></div>
+
+      <hr />
+      <h3 style="margin:12px 0 8px">학생별 출석률(%) (상위 40)</h3>
+      <canvas id="chart-students" width="980" height="520"></canvas>
+      <div class="row"><button class="btn" id="btn-export-students">PNG 저장</button></div>
+
+      <div class="meta">주의: 출석을 "저장"한 학생만 통계에 포함됩니다.</div>
+    </div>
+
+    <div class="card view" id="view-backup" style="display:none">
+      <h2 style="margin:0 0 8px">백업</h2>
+      <div class="meta">이 앱 데이터는 iPhone 내부(IndexedDB)에 저장됩니다. 아래로 내보내기/가져오기가 가능합니다.</div>
+      <div class="row">
+        <button class="btn primary" id="btn-export">내보내기(JSON)</button>
+        <label class="btn" style="cursor:pointer">
+          가져오기(JSON)
+          <input id="import-file" type="file" accept="application/json" style="display:none" />
+        </label>
+      </div>
+      <div class="alert">
+        iPhone: Safari에서 <b>공유 → 파일에 저장</b>으로 JSON을 iCloud Drive 등에 저장해두면 안전합니다.
+      </div>
+    </div>
+
+    <dialog id="modal" style="border:1px solid rgba(255,255,255,.12); border-radius:16px; background:#0b1020; color:#eef2ff; max-width:720px; width:92%">
+      <form method="dialog" style="padding:14px">
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <h2 id="modal-title" style="margin:0">학생</h2>
+          <button class="btn" value="cancel">닫기</button>
+        </div>
+      </form>
+      <form id="student-form" style="padding:14px; padding-top:0" onsubmit="return false;">
+        <input type="hidden" id="student-id" />
+        <div class="grid">
+          <label>이름 *
+            <input id="student-name" />
+          </label>
+          <label>학년 *
+            <input id="student-grade" placeholder="예: 중1, 고2" />
+          </label>
+          <label>반/그룹 *
+            <input id="student-group" placeholder="예: A반" />
+          </label>
+          <label>연락처(선택)
+            <input id="student-phone" />
+          </label>
+          <label>상태
+            <select id="student-active">
+              <option value="active">활성</option>
+              <option value="inactive">비활성</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn green" id="btn-student-save" type="button">저장</button>
+          <button class="btn danger" id="student-delete" type="button" style="display:none">비활성 처리</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="meta" style="margin-top:14px">
+      설치: Safari에서 <b>공유 → 홈 화면에 추가</b>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
