@@ -18,16 +18,44 @@ a{color:#c4b5fd;text-decoration:none}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
 .tab{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.92);font-weight:900;font-size:12px;cursor:pointer}
 .tab.active{background:rgba(124,58,237,.28);border-color:rgba(124,58,237,.38)}
+
+/* distinct view layouts */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:12px}
+.panel h2{margin:0 0 10px;font-size:15px}
+
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(max-width:720px){.grid{grid-template-columns:1fr}}
 label{font-size:12px;color:rgba(255,255,255,.75);display:flex;flex-direction:column;gap:6px}
 input,select{border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);padding:12px;color:#eef2ff}
+
 .table{width:100%;border-collapse:collapse;margin-top:10px}
 .table th,.table td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px 8px;text-align:left;font-size:13px;vertical-align:top}
 .table th{color:rgba(255,255,255,.75);font-size:12px}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-size:11px;color:rgba(255,255,255,.85)}
+
+.student-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+@media(max-width:720px){.student-cards{grid-template-columns:1fr}}
+.student-card{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.student-card .name{font-weight:1000}
+.student-card .sub{color:rgba(255,255,255,.72);font-size:12px;margin-top:6px}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-size:12px;color:rgba(255,255,255,.85)}
+.pill.good{border-color:rgba(34,197,94,.30);background:rgba(34,197,94,.12)}
+.pill.bad{border-color:rgba(251,113,133,.30);background:rgba(251,113,133,.12)}
+
 .meta{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.35}
 .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.10);padding:2px 6px;border-radius:8px}
 hr{border:0;border-top:1px solid rgba(255,255,255,.10);margin:12px 0}
 canvas{width:100%;height:auto;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.16)}
 .alert{background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.28);padding:10px;border-radius:12px;margin-top:10px}
+
+.checklist{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.check-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:10px 12px}
+.check-item .left{display:flex;flex-direction:column;gap:6px}
+.check-item .left .sub{font-size:12px;color:rgba(255,255,255,.72)}
+
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:860px){.stat-grid{grid-template-columns:1fr}}
+.stat-card{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:12px}
+.stat-card h3{margin:0 0 8px;font-size:14px}

@@ -67,22 +67,28 @@ async function renderStudents(){
 
   const rows = await listStudents(state.studentFilters);
 
-  const body = $('#students-tbody');
-  body.innerHTML = '';
+  const cards = $('#students-cards');
+  cards.innerHTML = '';
   for(const r of rows){
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.id}</td>
-      <td><b>${escapeHtml(r.name)}</b></td>
-      <td>${escapeHtml(r.grade||'')}</td>
-      <td>${escapeHtml(r.group||'')}</td>
-      <td>${escapeHtml(r.phone||'')}</td>
-      <td><button class="btn" data-edit="${r.id}">수정</button></td>
+    const div = document.createElement('div');
+    div.className = 'student-card';
+
+    const left = document.createElement('div');
+    left.innerHTML = `
+      <div class="name">${escapeHtml(r.name)}</div>
+      <div class="sub">${escapeHtml(r.grade||'')} · ${escapeHtml(r.group||'')}${r.phone?(' · '+escapeHtml(r.phone)) : ''}</div>
+      <div class="meta">ID: ${r.id}</div>
     `;
-    body.appendChild(tr);
+
+    const right = document.createElement('div');
+    right.innerHTML = `<button class="btn" data-edit="${r.id}">수정</button>`;
+
+    div.appendChild(left);
+    div.appendChild(right);
+    cards.appendChild(div);
   }
 
-  body.querySelectorAll('[data-edit]').forEach(b=>{
+  cards.querySelectorAll('[data-edit]').forEach(b=>{
     b.onclick = ()=>{ clickSound(); openStudentEditor(Number(b.dataset.edit)); };
   });
 
@@ -154,6 +160,18 @@ async function deleteStudentFromModal(){
   await renderStudents();
 }
 
+function nearestSundayISO(fromDate=new Date()){
+  // Sunday=0
+  const d = new Date(fromDate);
+  const day = d.getDay();
+  const diff = (7 - day) % 7; // days to next Sunday (today if Sunday)
+  d.setDate(d.getDate() + diff);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
 async function renderAttendance(){
   const date = state.attendanceDate;
   $('#att-date').value = date;
@@ -162,22 +180,30 @@ async function renderAttendance(){
   const students = await listStudents({ activeOnly: true });
   const map = await getAttendanceMap(date);
 
-  const body = $('#att-tbody');
-  body.innerHTML='';
+  const list = $('#att-checklist');
+  list.innerHTML='';
 
   for(const st of students){
     const val = map[st.id] || 'absent';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${escapeHtml(st.name)}</b></td>
-      <td>${escapeHtml(st.grade||'')}</td>
-      <td>${escapeHtml(st.group||'')}</td>
-      <td>
-        <label class="pill"><input type="radio" name="att-${st.id}" value="present" ${val==='present'?'checked':''}/> 출석</label>
-        <label class="pill"><input type="radio" name="att-${st.id}" value="absent" ${val!=='present'?'checked':''}/> 결석</label>
-      </td>
+    const row = document.createElement('div');
+    row.className = 'check-item';
+
+    const left = document.createElement('div');
+    left.className = 'left';
+    left.innerHTML = `
+      <div><b>${escapeHtml(st.name)}</b></div>
+      <div class="sub">${escapeHtml(st.grade||'')} · ${escapeHtml(st.group||'')}</div>
     `;
-    body.appendChild(tr);
+
+    const right = document.createElement('div');
+    right.innerHTML = `
+      <label class="pill good"><input type="radio" name="att-${st.id}" value="present" ${val==='present'?'checked':''}/> 출석</label>
+      <label class="pill bad"><input type="radio" name="att-${st.id}" value="absent" ${val!=='present'?'checked':''}/> 결석</label>
+    `;
+
+    row.appendChild(left);
+    row.appendChild(right);
+    list.appendChild(row);
   }
 
   $('#btn-att-save').onclick = async ()=>{
@@ -187,6 +213,18 @@ async function renderAttendance(){
       await setAttendance(date, st.id, v);
     }
     toast('출석 저장됨');
+  };
+
+  $('#btn-att-copy-absent').onclick = async ()=>{
+    clickSound();
+    const abs = [];
+    for(const st of students){
+      const v = (document.querySelector(`input[name=att-${st.id}]:checked`)||{}).value || 'absent';
+      if(v !== 'present') abs.push(`${st.name} (${st.grade}-${st.group})`);
+    }
+    const text = abs.length ? `결석자(${date})\n` + abs.map(x=>'• '+x).join('\n') : `결석자(${date}): 없음`;
+    try{ await navigator.clipboard.writeText(text); toast('결석자 복사됨'); }
+    catch(e){ toast('복사 실패'); }
   };
 
   toast(`출석 날짜: ${date}`);
@@ -323,6 +361,7 @@ function wire(){
   // attendance date
   $('#btn-att-open').onclick = ()=>{ clickSound(); state.attendanceDate = $('#att-date').value || today(); renderAttendance(); };
   $('#btn-att-today').onclick = ()=>{ clickSound(); state.attendanceDate = today(); renderAttendance(); };
+  $('#btn-att-sunday').onclick = ()=>{ clickSound(); state.attendanceDate = nearestSundayISO(new Date()); renderAttendance(); };
 
   // stats
   $('#btn-stats-refresh').onclick = ()=>{ clickSound(); state.lookback = Number($('#lookback').value||12); renderStats(); };
